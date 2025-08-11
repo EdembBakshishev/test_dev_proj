@@ -15,18 +15,18 @@ echo "📦 Deploy branch: $BRANCH"
 echo "🌐 Domain: $DOMAIN"
 echo "🎨 Background color: $BG_COLOR"
 
-# Генерація .env
+# Gen .env
 cat > .env <<EOF
 BG_COLOR=$BG_COLOR
 DOMAIN=$DOMAIN
 EMAIL=$EMAIL
 EOF
 
-# Оновлення і запуск
+# update and up
 docker-compose down
 docker-compose up -d --build
 
-# Перевірка HTTPS
+# chek HTTPS
 echo "🔍 Checking HTTPS..."
 if curl -s --head "https://$DOMAIN" | grep "200 OK" > /dev/null; then
     echo "✅ Site is available over HTTPS"
@@ -35,7 +35,7 @@ else
     exit 1
 fi
 
-# Перевірка сертифіката
+# Check cert
 echo "🔍 Checking SSL certificate..."
 EXPIRY_DATE=$(echo | openssl s_client -connect "$DOMAIN:443" -servername "$DOMAIN" 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
 echo "📅 Certificate expires on: $EXPIRY_DATE"

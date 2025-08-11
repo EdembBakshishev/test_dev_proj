@@ -1,0 +1,120 @@
+---
+- name: Deploy Node.js app locally
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    branch: dev          # За замовчуванням
+    domain: dev.example.com
+    email: your-email@example.com
+    bg_color: green
+
+  tasks:
+    - name: Show deployment info
+      debug:
+        msg: |
+          Deploying branch {{ branch }}
+          Domain: {{ domain }}
+          Email: {{ email }}
+          Background color: {{ bg_color }}
+
+    - name: Create .env file
+      copy:
+        dest: "./.env"
+        content: |
+          BRANCH={{ branch }}
+          DOMAIN={{ domain }}
+          EMAIL={{ email }}
+          BG_COLOR={{ bg_color }}
+
+    - name: Stop docker-compose
+      command: docker-compose down
+      args:
+        chdir: "{{ playbook_dir }}"
+
+    - name: Start docker-compose with build
+      command: docker-compose up -d --build
+      args:
+        chdir: "{{ playbook_dir }}"
+
+    - name: Wait for site to become available on HTTPS
+      uri:
+        url: "https://{{ domain }}"
+        method: GET
+        status_code: 200
+        timeout: 30
+      register: result
+      retries: 5
+      delay: 10
+      until: result.status == 200
+
+    - name: Check SSL certificate expiration date
+      shell: >
+        openssl s_client -connect {{ domain }}:443 -servername {{ domain }} </dev/null 2>/dev/null | openssl x509 -noout -enddate
+      register: ssl_expiry
+
+    - name: Show SSL certificate expiry
+      debug:
+        msg: "{{ ssl_expiry.stdout }}"
+
+
+# ---
+# - name: Deploy Node.js app locally
+#   hosts: localhost
+#   connection: local
+#   gather_facts: false
+
+#   vars:
+#     branch: dev          # За замовчуванням
+#     domain: dev.example.com
+#     email: your-email@example.com
+#     bg_color: green
+
+#   tasks:
+#     - name: Show deployment info
+#       debug:
+#         msg: |
+#           Deploying branch {{ branch }}
+#           Domain: {{ domain }}
+#           Email: {{ email }}
+#           Background color: {{ bg_color }}
+
+#     - name: Create branch-specific .env file
+#       copy:
+#         dest: "./.env.{{ branch }}"
+#         content: |
+#           BRANCH={{ branch }}
+#           DOMAIN={{ domain }}
+#           EMAIL={{ email }}
+#           BG_COLOR={{ bg_color }}
+
+#     - name: Stop docker-compose for this branch
+#       command: docker-compose --env-file .env.{{ branch }} -p {{ branch }} down
+#       args:
+#         chdir: "{{ playbook_dir }}"
+
+#     - name: Start docker-compose with build for this branch
+#       command: docker-compose --env-file .env.{{ branch }} -p {{ branch }} up -d --build
+#       args:
+#         chdir: "{{ playbook_dir }}"
+
+#     - name: Wait for site to become available on HTTPS
+#       uri:
+#         url: "https://{{ domain }}"
+#         method: GET
+#         status_code: 200
+#         timeout: 30
+#       register: result
+#       retries: 5
+#       delay: 10
+#       until: result.status == 200
+
+#     - name: Check SSL certificate expiration date
+#       shell: >
+#         openssl s_client -connect {{ domain }}:443 -servername {{ domain }} </dev/null 2>/dev/null | openssl x509 -noout -enddate
+#       register: ssl_expiry
+
+#     - name: Show SSL certificate expiry
+#       debug:
+#         msg: "{{ ssl_expiry.stdout }}"

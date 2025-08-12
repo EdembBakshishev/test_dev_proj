@@ -28,7 +28,7 @@ DOMAIN=$DOMAIN
 EMAIL=$EMAIL
 EOF
 
-# We define the project name and compose file for production
+# We define the project name and compose file for productionc
 PROJECT_NAME="devops-test-prod"
 COMPOSE_FILE="docker-compose.prod.yml"
 

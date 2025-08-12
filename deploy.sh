@@ -38,7 +38,7 @@ docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME down --remove-orphans
 # Launching production containers
 docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d --build
 
-# Checking HTTPS availability with retries
+# Checking HTTPS availability with retrieso
 echo "🔍 Checking HTTPS availability..."
 
 MAX_RETRIES=5

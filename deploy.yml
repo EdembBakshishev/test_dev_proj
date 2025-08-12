@@ -65,7 +65,7 @@
 #     - name: Show SSL certificate expiry
 #       debug:
 #         msg: "{{ ssl_expiry.stdout }}"
-
+# 
 
 ---
 - name: Deploy Node.js app locally

@@ -68,9 +68,8 @@
 # 
 
 ---
-- name: Deploy Node.js app locally
-  hosts: localhost
-  connection: local
+- name: Deploy Node.js app remotely
+  hosts: dev
   gather_facts: false
 
   vars:
@@ -90,7 +89,7 @@
 
     - name: Create .env file
       copy:
-        dest: "./.env"
+        dest: "/root/devops-test/.env"
         content: |
           DEV_BG_COLOR={{ bg_color }}
           DEV_PORT=3000
@@ -100,15 +99,15 @@
           EMAIL={{ email }}
 
     - name: Stop only dev container if exists
-      command: docker-compose stop node-app-dev
+      command: docker-compose -f docker-compose.dev.yml stop node-app-dev
       args:
-        chdir: "{{ playbook_dir }}"
+        chdir: "/root/devops-test"
       ignore_errors: yes
 
     - name: Start dev container
       command: docker-compose -f docker-compose.dev.yml up -d --build
       args:
-        chdir: "{{ playbook_dir }}"
+        chdir: "/root/devops-test"
 
     - name: Restart nginx system service
       systemd:

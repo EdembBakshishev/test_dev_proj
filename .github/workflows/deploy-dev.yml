@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
+      - name: Checkout (cp) repo
+        uses: actions/checkout@v4 
 
       - name: Deploy via SSH and Ansible
         uses: appleboy/ssh-action@v1.0.3

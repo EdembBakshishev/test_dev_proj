@@ -25,5 +25,5 @@ jobs:
             git fetch origin
             git checkout dev
             git pull origin dev
-            ansible-playbook playbook.yml -i inventory.ini \
+            ansible-playbook deploy.yml -i inventory.ini \
               --extra-vars "branch=dev domain=dev.iatnih.pp.ua email=${{ secrets.SSL_EMAIL }} bg_color=green"

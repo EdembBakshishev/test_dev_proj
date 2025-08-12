@@ -1,0 +1,28 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - dev
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH and Ansible
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/devops-test
+            git fetch origin
+            git checkout dev
+            git pull origin dev
+            ansible-playbook playbook.yml -i inventory.ini \
+              --extra-vars "branch=dev domain=dev.iatnih.pp.ua email=${{ secrets.SSL_EMAIL }} bg_color=green"

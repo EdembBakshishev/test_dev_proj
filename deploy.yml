@@ -1,3 +1,72 @@
+# ---
+# - name: Deploy Node.js app locally
+#   hosts: localhost
+#   connection: local
+#   gather_facts: false
+
+#   vars:
+#     branch: dev          # За замовчуванням
+#     domain: dev.iatnih.pp.ua 
+#     email: your-email@example.com
+#     bg_color: green
+
+#   tasks:
+#     - name: Show deployment info
+#       debug:
+#         msg: |
+#           Deploying branch {{ branch }}
+#           Domain: {{ domain }}
+#           Email: {{ email }}
+#           Background color: {{ bg_color }}
+
+#     - name: Create .env file
+#       copy:
+#         dest: "./.env"
+#         content: |
+#           DEV_BG_COLOR={{ bg_color }}
+#           DEV_PORT=3000
+#           PROD_BG_COLOR=purple
+#           PROD_PORT=3001
+#           DOMAIN={{ domain }}
+#           EMAIL={{ email }}
+
+#     - name: Stop only dev container if exists
+#       command: docker-compose stop node-app-dev
+#       args:
+#         chdir: "{{ playbook_dir }}"
+#       ignore_errors: yes
+
+#     - name: Start dev container
+#       command: docker-compose -f docker-compose.dev.yml up -d --build
+#       args:
+#         chdir: "{{ playbook_dir }}"
+
+#     - name: Restart nginx system service
+#       systemd:
+#         name: nginx
+#         state: restarted
+
+#     - name: Wait for site to become available on HTTPS
+#       uri:
+#         url: "https://{{ domain }}"
+#         method: GET
+#         status_code: 200
+#         timeout: 30
+#       register: result
+#       retries: 5
+#       delay: 10
+#       until: result.status == 200
+
+#     - name: Check SSL certificate expiration date
+#       shell: >
+#         openssl s_client -connect {{ domain }}:443 -servername {{ domain }} </dev/null 2>/dev/null | openssl x509 -noout -enddate
+#       register: ssl_expiry
+
+#     - name: Show SSL certificate expiry
+#       debug:
+#         msg: "{{ ssl_expiry.stdout }}"
+
+
 ---
 - name: Deploy Node.js app locally
   hosts: localhost
@@ -5,10 +74,10 @@
   gather_facts: false
 
   vars:
-    branch: dev          # За замовчуванням
-    domain: dev.iatnih.pp.ua 
-    email: your-email@example.com
-    bg_color: green
+    branch: "{{ branch | default('dev') }}"
+    domain: "{{ domain | default('dev.iatnih.pp.ua') }}"
+    email: "{{ email | default('your-email@example.com') }}"
+    bg_color: "{{ bg_color | default('green') }}"
 
   tasks:
     - name: Show deployment info

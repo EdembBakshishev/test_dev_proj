@@ -19,6 +19,7 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_KEY }}
+          port: 2254
           script: |
             cd ~/devops-test
             git fetch origin

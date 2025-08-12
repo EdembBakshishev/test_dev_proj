@@ -1,0 +1,9 @@
+services:
+  node-app-dev:
+    build: .
+    environment:
+      - BG_COLOR=${DEV_BG_COLOR}
+      - PORT=3000
+    ports:
+      - "3000:3000"
+    command: node server.js --port 3000

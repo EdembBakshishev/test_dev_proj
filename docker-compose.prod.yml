@@ -1,0 +1,9 @@
+services:
+  node-app-prod:
+    build: .
+    environment:
+      - BG_COLOR=${PROD_BG_COLOR}
+      - PORT=3001
+    ports:
+      - "3001:3001"
+    command: node server.js --port 3001

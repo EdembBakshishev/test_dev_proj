@@ -1,0 +1,107 @@
+# DevOps Test Project
+
+## Overview
+
+This project is a simple Node.js Single Page Application (SPA) that displays a "Hello" page with a dynamic background color: green for the dev environment (`dev.iatnih.pp.ua`) and purple for the prod environment (`prod.iatnih.pp.ua`). The application is served via Nginx as a reverse proxy with HTTPS enabled using Let's Encrypt certificates. HTTP requests are redirected to HTTPS. The project includes Docker Compose for container orchestration, Ansible for dev deployment, and a bash script for prod deployment.
+
+## Repository Structure
+
+- **Branches**:
+  - `main`: Production environment (purple background, `prod.iatnih.pp.ua`).
+  - `dev`: Development environment (green background, `dev.iatnih.pp.ua`).
+- **Key Files**:
+  - `server.js`: Node.js Express server that serves the SPA with a dynamic background color set via `BG_COLOR` environment variable.
+  - `Dockerfile`: Builds the Node.js application container.
+  - `docker-compose.dev.yml`: Docker Compose configuration for the dev environment.
+  - `docker-compose.prod.yml`: Docker Compose configuration for the prod environment.
+  - `nginx.conf`: Nginx configuration for HTTP-&gt;HTTPS redirect and reverse proxy to Node.js.
+  - `deploy.sh`: Bash script for deploying the prod environment, generating configs, and verifying HTTPS/certificate.
+  - `deploy.yml`: Ansible playbook for deploying the dev environment.
+  - `certbot/`: Directory for Let's Encrypt certificates.
+
+
+## Local Setup
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/EdembBakshishev/test_dev_proj.git
+   cd devops-test
+   ```
+
+2. For **dev** environment:
+
+   - Run Docker Compose:
+     docker-compose -f docker-compose.dev.yml up -d --build
+
+3. For **prod** environment (local testing):
+
+   - Run Docker Compose:
+
+     docker-compose -f docker-compose.prod.yml up -d --build
+     
+
+## Deployment
+
+### Dev Environment
+
+- **Automatic Deployment**:
+
+  - Push to the `dev` branch triggers a GitHub Action (`.github/workflows/deploy-dev.yml`).
+  - The Action uses Ansible (`deploy.yml`) to deploy to the dev server (`dev.iatnih.pp.ua`).
+  - Steps:
+    1. Clones the repository to `/app/devops-test` on the server.
+    2. Generates `nginx.dev.conf` and `.env` with `BG_COLOR=green`, `DOMAIN=dev.iatnih.pp.ua`.
+    3. Runs `docker-compose -f docker-compose.dev.yml up -d --build`.
+    4. Executes certbot to obtain/renew Let's Encrypt certificate.
+  - Access: `https://dev.iatnih.pp.ua:8443` (green background).
+
+- **Manual Deployment**:
+
+  ansible-playbook deploy.yml 
+
+### Prod Environment
+
+- Deploy using the `deploy.sh` script:
+
+  ./deploy.sh main prod.iatnih.pp.ua edembakshishev@gmail.com purple
+  
+- **Steps**:
+  1. Validates input parameters (`branch`, `domain`, `email`, `bg_color`).
+  2. Generates `.env` and `nginx.prod.conf` (if templated).
+  3. Runs `docker-compose -f docker-compose.prod.yml up -d --build`.
+  4. Obtains/renews Let's Encrypt certificate for `prod.iatnih.pp.ua`.
+  5. Verifies:
+     - HTTPS accessibility (`https://prod.iatnih.pp.ua` returns 200).
+     - Valid SSL certificate (checks expiry date).
+     - HTTP-&gt;HTTPS redirect.
+- Access: `https://prod.iatnih.pp.ua` (purple background).
+
+## Verification
+
+- **Dev**:
+
+  - Check: `curl -I https://dev.iatnih.pp.ua:8443` (should return HTTP 200).
+  - Certificate: `echo | openssl s_client -connect dev.iatnih.pp.ua:8443 2>/dev/null | openssl x509 -noout -enddate`
+  - Redirect: `curl -s -o /dev/null -w "%{redirect_url}" http://dev.iatnih.pp.ua:8080` (should redirect to HTTPS).
+  - Background color: Green.
+
+- **Prod**:
+
+  - Check: `curl -I https://prod.iatnih.pp.ua` (should return HTTP 200).
+  - Certificate: `echo | openssl s_client -connect prod.iatnih.pp.ua:443 2>/dev/null | openssl x509 -noout -enddate`
+  - Redirect: `curl -s -o /dev/null -w "%{redirect_url}" http://prod.iatnih.pp.ua` (should redirect to HTTPS).
+  - Background color: Purple.
+
+## Notes
+
+- **Prod Stability**: The prod environment (`prod.iatnih.pp.ua`) runs is isolated from dev to ensure client-facing services are unaffected by dev changes.
+- **Dev Flexibility**: The dev environment can be restarted, rebuilt, or modified without impacting prod.
+- **Certificate Renewal**: Certbot automatically handles certificate renewal (configured in `docker-compose` files).
+- **CI/CD**: GitHub Actions automates dev deployment. Ensure `SERVER_HOST`, `SERVER_USER`, `SSH_KEY`, and `SSL_EMAIL` are set in GitHub Secrets.
+
+## Troubleshooting
+
+- **Certificate Issues**: If certbot fails, check logs: `docker-compose -f docker-compose.<env>.yml logs certbot`.
+- **Nginx Errors**: Verify `nginx.conf` paths and reload: `docker exec nginx_<env> nginx -s reload`.
+- **Port Conflicts**: Ensure no other services use ports.

@@ -1,10 +1,10 @@
 #!/bin/bash
 set -e
 
-BRANCH=$1       # main
-DOMAIN=$2       # наприклад, prod.iatnih.pp.ua
-EMAIL=$3        # email для Let's Encrypt
-BG_COLOR=$4     # наприклад, purple
+BRANCH=$1       
+DOMAIN=$2       
+EMAIL=$3        
+BG_COLOR=$4     
 
 if [ "$BRANCH" != "main" ]; then
     echo "Error: This deploy script supports only 'main' branch"
@@ -20,7 +20,7 @@ echo "📦 Deploy branch: $BRANCH"
 echo "🌐 Domain: $DOMAIN"
 echo "🎨 Background color: $BG_COLOR"
 
-# Генеруємо .env для продакшену
+# .env 
 cat > .env <<EOF
 PROD_BG_COLOR=$BG_COLOR
 PROD_PORT=3001
@@ -28,17 +28,17 @@ DOMAIN=$DOMAIN
 EMAIL=$EMAIL
 EOF
 
-# Визначаємо ім'я проекту та compose файл для продакшену
+# We define the project name and compose file for production
 PROJECT_NAME="devops-test-prod"
 COMPOSE_FILE="docker-compose.prod.yml"
 
-# Зупиняємо і видаляємо старі контейнери продакшену разом з орфанами
+# Stop and remove old production containers along with orphans
 docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME down --remove-orphans
 
-# Запускаємо продакшен контейнери
+# Launching production containers
 docker-compose -f $COMPOSE_FILE -p $PROJECT_NAME up -d --build
 
-# Перевіряємо HTTPS доступність із повторними спробами
+# Checking HTTPS availability with retries
 echo "🔍 Checking HTTPS availability..."
 
 MAX_RETRIES=5
@@ -60,7 +60,7 @@ if [ $COUNT -eq $MAX_RETRIES ]; then
   exit 1
 fi
 
-# Перевіряємо SSL сертифікат
+# Checking SSL certificate
 echo "🔍 Checking SSL certificate..."
 EXPIRY_DATE=$(echo | openssl s_client -connect "$DOMAIN:443" -servername "$DOMAIN" 2>/dev/null | openssl x509 -noout -enddate | cut -d= -f2)
 echo "📅 Certificate expires on: $EXPIRY_DATE"

@@ -6,4 +6,4 @@ services:
       - PORT=3001
     ports:
       - "3001:3001"
-    command: node server.js --port 3001
+    command: node server.js --port 3001 #
